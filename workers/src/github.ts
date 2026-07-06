@@ -13,11 +13,24 @@ function apiBase(path: string) {
   return `https://api.github.com/repos/${REPO}/contents/${path}`;
 }
 
+function decodeBase64(base64: string): string {
+  const binary = atob(base64);
+  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+  return new TextDecoder("utf-8").decode(bytes);
+}
+
+function encodeBase64(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  let binary = "";
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary);
+}
+
 export async function getFile(token: string, path: string) {
   const res = await fetch(apiBase(path), { headers: headers(token) });
   if (!res.ok) return null;
   const data: any = await res.json();
-  return { sha: data.sha, content: atob(data.content), size: data.size };
+  return { sha: data.sha, content: decodeBase64(data.content), size: data.size };
 }
 
 export async function listDir(token: string, path: string) {
@@ -36,7 +49,7 @@ export async function createOrUpdateFile(
 ) {
   const body: any = {
     message: sha ? `更新 ${path}` : `创建 ${path}`,
-    content: isBase64 ? content : btoa(unescape(encodeURIComponent(content))),
+    content: isBase64 ? content : encodeBase64(content),
   };
   if (sha) body.sha = sha;
 
