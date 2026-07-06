@@ -5,7 +5,7 @@ import comments from "./routes/comments";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-app.use("*", cors);
+app.use("/*", cors);
 app.route("/", comments);
 
 app.get("/health", (c) => c.json({ status: "ok" }));
