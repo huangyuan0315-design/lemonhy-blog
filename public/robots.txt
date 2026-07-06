@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://lemonhy.pages.dev/sitemap-index.xml
+Sitemap: https://huangyuan-blog.pages.dev/sitemap-index.xml

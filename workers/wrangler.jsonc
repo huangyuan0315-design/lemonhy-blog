@@ -1,16 +1,16 @@
 {
   "name": "lemonhy-comments-api",
   "main": "src/index.ts",
-  "compatibility_date": "2026-07-07",
+  "compatibility_date": "2025-07-07",
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "blog-comments",
-      "database_id": ""
+      "database_id": "6bf829dd-8e81-45c6-ae35-2d05e9c1a70a"
     }
   ],
   "vars": {
-    "ADMIN_PASSWORD": "",
-    "ALLOWED_ORIGIN": "https://lemonhy.pages.dev"
+    "ADMIN_PASSWORD": "lemonhy-admin-2026!xK9#mP2",
+    "ALLOWED_ORIGIN": "https://huangyuan-blog.pages.dev"
   }
 }

@@ -2,7 +2,7 @@ backend:
   name: github
   repo: huangyuan0315-design/lemonhy-blog
   branch: main
-  base_url: https://lemonhy.pages.dev
+  base_url: https://huangyuan-blog.pages.dev
   auth_endpoint: /api/auth
 
 media_folder: "public/images"
@@ -27,5 +27,5 @@ collections:
       - { label: "正文", name: "body", widget: "markdown" }
 
 locale: zh_Hans
-site_url: https://lemonhy.pages.dev
-display_url: https://lemonhy.pages.dev
+site_url: https://huangyuan-blog.pages.dev
+display_url: https://huangyuan-blog.pages.dev

@@ -25,7 +25,7 @@ const { postSlug } = Astro.props;
 
   async function loadComments() {
     try {
-      const api = "https://comments-api.lemonhy.workers.dev";
+      const api = "https://lemonhy-comments-api.huangyuan0315.workers.dev";
       const res = await fetch(`${api}/api/comments/${slug}`);
       const comments = await res.json();
       if (!Array.isArray(comments) || comments.length === 0) {
@@ -83,7 +83,7 @@ const { postSlug } = Astro.props;
     msg.classList.add("hidden");
 
     try {
-      const api = "https://comments-api.lemonhy.workers.dev";
+      const api = "https://lemonhy-comments-api.huangyuan0315.workers.dev";
       const res = await fetch(`${api}/api/comments/${slug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
