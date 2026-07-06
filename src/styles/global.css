@@ -39,11 +39,16 @@ body::before {
 
 /* Global glass backdrop */
 header, footer {
-  @apply bg-white/25 dark:bg-gray-950/25 backdrop-blur-xl;
+  @apply bg-white/7 dark:bg-gray-950/7 backdrop-blur-xl;
 }
 
 main {
-  @apply bg-white/25 dark:bg-gray-950/25 backdrop-blur-sm rounded-2xl;
+  @apply bg-white/7 dark:bg-gray-950/7 backdrop-blur-sm rounded-2xl;
+}
+
+/* Article header block */
+article > header {
+  @apply bg-white/7 dark:bg-gray-950/7 backdrop-blur rounded-2xl p-6;
 }
 
 /* Smooth rounded corners everywhere */
@@ -69,20 +74,20 @@ input, textarea, select, button:not(.no-radius) {
 }
 
 .prose code:not(pre code) {
-  @apply text-primary-600 dark:text-primary-400 bg-gray-100/25 dark:bg-gray-800/25 rounded-lg px-1.5 py-0.5 text-sm backdrop-blur;
+  @apply text-primary-600 dark:text-primary-400 bg-gray-100/7 dark:bg-gray-800/7 rounded-lg px-1.5 py-0.5 text-sm backdrop-blur;
 }
 
 /* Article elements */
 .prose blockquote {
-  @apply border-l-primary-500 bg-white/25 dark:bg-white/5 backdrop-blur rounded-r-xl;
+  @apply border-l-primary-500 bg-white/7 dark:bg-white/5 backdrop-blur rounded-r-xl;
 }
 
 .prose table {
-  @apply bg-white/25 dark:bg-white/5 backdrop-blur rounded-xl overflow-hidden;
+  @apply bg-white/7 dark:bg-white/5 backdrop-blur rounded-xl overflow-hidden;
 }
 
 .prose thead {
-  @apply bg-white/25 dark:bg-white/10;
+  @apply bg-white/7 dark:bg-white/10;
 }
 
 .prose hr {
