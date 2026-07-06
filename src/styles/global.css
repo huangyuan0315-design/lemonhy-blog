@@ -19,8 +19,46 @@
 }
 
 body {
-  @apply text-gray-900 dark:text-gray-100 antialiased relative;
+  @apply text-gray-900 dark:text-gray-50 antialiased relative;
   background-color: transparent;
+  text-shadow: 0 0 1px rgb(255 255 255 / 0.3), 0 1px 2px rgb(0 0 0 / 0.04);
+}
+
+.dark body {
+  text-shadow: 0 0 1px rgb(0 0 0 / 0.2), 0 1px 3px rgb(0 0 0 / 0.5);
+}
+
+/* Headings contrast */
+h1, h2, h3, h4, h5, h6 {
+  @apply text-gray-900 dark:text-white font-bold tracking-tight;
+}
+
+/* Muted/secondary text — darker for readability */
+.text-gray-500, .text-gray-400, .dark .text-gray-400, .dark .text-gray-500 {
+  @apply text-gray-600 dark:text-gray-300;
+}
+
+/* Article prose */
+.prose {
+  @apply text-gray-800 dark:text-gray-100 leading-relaxed;
+}
+
+.prose strong {
+  @apply text-gray-900 dark:text-white font-semibold;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  @apply text-gray-900 dark:text-white;
+}
+
+/* Links — prominent */
+.prose a {
+  @apply text-primary-700 dark:text-primary-300 font-medium;
+}
+
+/* Nav links */
+nav a {
+  @apply text-gray-700 dark:text-gray-200;
 }
 
 body::before {
