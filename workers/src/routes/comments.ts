@@ -16,7 +16,7 @@ function sanitize(str: string): string {
 
 // GET /api/comments/:slug — 获取已批准评论
 app.get("/api/comments/:slug", async (c) => {
-  const slug = c.req.param("slug");
+  const slug = c.req.param("slug").replace(/--/g, "/");
   const { results } = await c.env.DB.prepare(
     "SELECT id, post_slug, author, body, status, created_at FROM comments WHERE post_slug = ? AND status = 'approved' ORDER BY created_at ASC"
   )
@@ -28,7 +28,7 @@ app.get("/api/comments/:slug", async (c) => {
 
 // POST /api/comments/:slug — 提交新评论
 app.post("/api/comments/:slug", async (c) => {
-  const slug = c.req.param("slug");
+  const slug = c.req.param("slug").replace(/--/g, "/");
   const body = await c.req.json<{ author?: string; body?: string }>();
 
   if (!body.author || !body.body) {

@@ -14,7 +14,7 @@ const { postSlug } = Astro.props;
 
 <script define:vars={{ postSlug }}>
   (function () {
-    const slug = postSlug;
+    const slug = postSlug.replace(/\//g, "--");
     const listEl = document.getElementById("comment-list");
     const formContainer = document.getElementById("comment-form-container");
     if (!listEl || !formContainer) return;
