@@ -45,17 +45,21 @@ import SEO from "../components/SEO.astro";
           </form>
         </div>
       </div>`;
-    document.getElementById("login-form")!.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const pwd = (e.target as HTMLFormElement).elements.namedItem("password") as HTMLInputElement;
-      const msg = document.getElementById("login-msg")!;
-      try {
-        const res = await fetch(`${API}/api/admin/comments`, { headers: { Authorization: `Bearer ${pwd.value.trim()}` } });
-        if (res.ok) { sessionStorage.setItem("admin_token", pwd.value.trim()); showDashboard(); }
-        else { msg.textContent = "密码错误"; msg.classList.remove("hidden"); }
-      } catch { msg.textContent = "网络错误"; msg.classList.remove("hidden"); }
-    });
-  }
+    function doLogin(){
+  var pwdEl=document.getElementById("login-form").querySelector("input");
+  var msg=document.getElementById("login-msg");
+  if(!pwdEl||!msg)return;
+  var pwd=pwdEl.value.trim();
+  if(!pwd){msg.textContent="请输入密码";msg.classList.remove("hidden");return;}
+  msg.classList.add("hidden");
+  fetch(API+"/api/admin/comments",{headers:{Authorization:"Bearer "+pwd}}).then(function(res){
+    if(res.ok){sessionStorage.setItem("admin_token",pwd);showDashboard();}
+    else{msg.textContent="密码错误";msg.classList.remove("hidden");}
+  }).catch(function(){msg.textContent="网络错误";msg.classList.remove("hidden");});
+}
+var lf=document.getElementById("login-form");
+if(lf){lf.addEventListener("submit",function(e){e.preventDefault();doLogin();});
+  var btn=lf.querySelector("button");if(btn)btn.addEventListener("click",function(e){e.preventDefault();doLogin();});}}
 
   // ── Dashboard ──
   function showDashboard() {
