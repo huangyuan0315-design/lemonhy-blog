@@ -197,7 +197,7 @@ import SEO from "../components/SEO.astro";
       list.innerHTML = articles.map((a: any) => `
       <div class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
         <div class="flex-1 min-w-0 mr-4">
-          <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${esc(a.title || "无标题")}</p>
+          <a href="/blog/${(a.path||'').replace('src/content/posts/','').replace('.md','')}" target="_blank" class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline truncate block">${esc(a.title || "无标题")}</a>
           <p class="text-xs text-gray-400 mt-0.5">${fmt(a.pubDate)} · ${esc(a.category || "")} · <span class="text-primary-500">${(a.tags||[]).map((t:string)=>`#${t}`).join(" ")}</span></p>
         </div>
         <div class="flex gap-1 shrink-0">

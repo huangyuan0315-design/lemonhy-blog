@@ -10,16 +10,36 @@ const IMG_DIR = "public/images";
 // ── PUBLIC: gallery ──
 app.get("/api/public/images", async (c) => {
   try {
-    const { results } = await c.env.DB.prepare(
-      "SELECT name, captured_at, uploaded_at FROM images ORDER BY captured_at DESC, uploaded_at DESC LIMIT 200"
-    ).all();
-    return c.json(
-      results.map((r: any) => ({
-        name: r.name,
-        url: `/images/${r.name}`,
-        date: r.captured_at || r.uploaded_at,
-      }))
-    );
+    // Fetch both GitHub file listing and D1 metadata
+    const [files, { results: dbRows }] = await Promise.all([
+      listDir(c.env.GITHUB_TOKEN, IMG_DIR).catch(() => []),
+      c.env.DB.prepare("SELECT name, captured_at, uploaded_at FROM images").all(),
+    ]);
+
+    const dbMeta: Record<string, any> = {};
+    for (const r of dbRows as any[]) dbMeta[r.name] = r;
+
+    const images = files
+      .filter((f) => /\.(png|jpg|jpeg|gif|svg|webp)$/i.test(f.name))
+      .map((f) => ({
+        name: f.name,
+        url: `/images/${f.name}`,
+        date: dbMeta[f.name]?.captured_at || dbMeta[f.name]?.uploaded_at || "",
+      }));
+
+    // Also include D1 entries not in GitHub
+    for (const r of dbRows as any[]) {
+      if (!images.find((img) => img.name === r.name)) {
+        images.push({
+          name: r.name,
+          url: `/images/${r.name}`,
+          date: r.captured_at || r.uploaded_at,
+        });
+      }
+    }
+
+    images.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    return c.json(images.slice(0, 200));
   } catch (e: any) {
     return c.json({ error: e.message }, { status: 500 });
   }
