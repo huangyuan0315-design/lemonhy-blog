@@ -1,0 +1,31 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../../components/BaseLayout.astro";
+import Header from "../../../components/Header.astro";
+import Footer from "../../../components/Footer.astro";
+import SEO from "../../../components/SEO.astro";
+import PostList from "../../../components/PostList.astro";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("posts");
+  const categories = [...new Set(posts.filter((p) => !p.data.draft).map((p) => p.data.category))];
+  return categories.map((cat) => ({ params: { category: cat } }));
+}
+
+const { category } = Astro.params;
+const posts = await getCollection("posts");
+const catPosts = posts
+  .filter((p) => !p.data.draft && p.data.category === category)
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+---
+
+<BaseLayout>
+  <SEO slot="head" title={`分类：${category}`} description={`${category} 分类下的文章`} />
+  <Header />
+  <main class="flex-1 max-w-4xl mx-auto px-4 py-12 w-full">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2 capitalize">{category}</h1>
+    <p class="text-gray-500 dark:text-gray-400 mb-8">{catPosts.length} 篇文章</p>
+    <PostList posts={catPosts} />
+  </main>
+  <Footer />
+</BaseLayout>

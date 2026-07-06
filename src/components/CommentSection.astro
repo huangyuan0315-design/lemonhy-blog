@@ -1,0 +1,115 @@
+---
+export interface Props {
+  postSlug: string;
+}
+
+const { postSlug } = Astro.props;
+---
+
+<div id="comments" class="space-y-6">
+  <h3 class="text-xl font-semibold text-gray-900 dark:text-white">评论</h3>
+  <div id="comment-list" class="space-y-4"></div>
+  <div id="comment-form-container"></div>
+</div>
+
+<script define:vars={{ postSlug }}>
+  const slug = postSlug;
+  const listEl = document.getElementById("comment-list")!;
+  const formContainer = document.getElementById("comment-form-container")!;
+
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  async function loadComments() {
+    try {
+      const api = "https://comments-api.lemonhy.workers.dev";
+      const res = await fetch(`${api}/api/comments/${slug}`);
+      const comments = await res.json();
+      if (!Array.isArray(comments) || comments.length === 0) {
+        listEl.innerHTML =
+          '<p class="text-gray-400 dark:text-gray-500 text-sm">暂无评论，来发表第一条评论吧。</p>';
+        return;
+      }
+      listEl.innerHTML = comments
+        .map(
+          (c) => `
+        <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(c.author)}</span>
+            <span class="text-xs text-gray-400 dark:text-gray-500">${new Date(c.created_at).toLocaleDateString("zh-CN")}</span>
+          </div>
+          <p class="text-sm text-gray-700 dark:text-gray-300">${escapeHtml(c.body)}</p>
+        </div>`
+        )
+        .join("");
+    } catch {
+      listEl.innerHTML = '<p class="text-gray-400 dark:text-gray-500 text-sm">评论加载失败，请稍后再试。</p>';
+    }
+  }
+
+  formContainer.innerHTML = `
+    <form id="comment-form" class="space-y-3 mt-6 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">昵称</label>
+        <input type="text" name="author" required maxlength="30"
+          class="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">评论内容</label>
+        <textarea name="body" required maxlength="500" rows="3"
+          class="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"></textarea>
+      </div>
+      <div class="flex items-center justify-between">
+        <p id="comment-msg" class="text-xs text-gray-400 dark:text-gray-500 hidden"></p>
+        <button type="submit"
+          class="px-4 py-2 bg-primary-600 text-white text-sm rounded-md hover:bg-primary-700 transition-colors cursor-pointer">
+          提交评论
+        </button>
+      </div>
+    </form>
+  `;
+
+  document.getElementById("comment-form")!.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const msg = document.getElementById("comment-msg")!;
+    const btn = form.querySelector("button")!;
+
+    btn.disabled = true;
+    btn.textContent = "提交中...";
+    msg.classList.add("hidden");
+
+    try {
+      const api = "https://comments-api.lemonhy.workers.dev";
+      const res = await fetch(`${api}/api/comments/${slug}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          author: form.elements.namedItem("author").value.trim(),
+          body: form.elements.namedItem("body").value.trim(),
+        }),
+      });
+
+      if (res.ok) {
+        msg.textContent = "评论已提交，审核通过后将显示。";
+        msg.classList.remove("hidden");
+        form.reset();
+      } else {
+        const err = await res.text();
+        msg.textContent = err || "提交失败，请稍后再试。";
+        msg.classList.remove("hidden");
+      }
+    } catch {
+      msg.textContent = "网络错误，请稍后再试。";
+      msg.classList.remove("hidden");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "提交评论";
+    }
+  });
+
+  loadComments();
+</script>

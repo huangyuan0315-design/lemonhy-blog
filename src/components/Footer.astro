@@ -1,0 +1,12 @@
+---
+import { SITE } from "../lib/constants";
+---
+
+<footer class="mt-auto border-t border-gray-200 dark:border-gray-800">
+  <div class="max-w-4xl mx-auto px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+    <p>&copy; {new Date().getFullYear()} {SITE.title} — Built with Astro & Cloudflare</p>
+    <p class="mt-1">
+      <a href="/rss.xml" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">RSS 订阅</a>
+    </p>
+  </div>
+</footer>

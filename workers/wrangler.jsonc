@@ -1,0 +1,16 @@
+{
+  "name": "lemonhy-comments-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-07",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "blog-comments",
+      "database_id": ""
+    }
+  ],
+  "vars": {
+    "ADMIN_PASSWORD": "",
+    "ALLOWED_ORIGIN": "https://lemonhy.pages.dev"
+  }
+}

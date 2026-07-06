@@ -1,0 +1,43 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../../../components/BaseLayout.astro";
+import Header from "../../../../components/Header.astro";
+import Footer from "../../../../components/Footer.astro";
+import SEO from "../../../../components/SEO.astro";
+import PostList from "../../../../components/PostList.astro";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("posts");
+  const combos: { year: string; month: string }[] = [];
+  for (const p of posts) {
+    if (p.data.draft) continue;
+    const y = p.data.pubDate.getFullYear().toString();
+    const m = (p.data.pubDate.getMonth() + 1).toString().padStart(2, "0");
+    if (!combos.some((c) => c.year === y && c.month === m)) {
+      combos.push({ year: y, month: m });
+    }
+  }
+  return combos.map(({ year, month }) => ({ params: { year, month } }));
+}
+
+const { year, month } = Astro.params;
+const posts = await getCollection("posts");
+const monthPosts = posts
+  .filter(
+    (p) =>
+      !p.data.draft &&
+      p.data.pubDate.getFullYear().toString() === year &&
+      (p.data.pubDate.getMonth() + 1).toString().padStart(2, "0") === month
+  )
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+---
+
+<BaseLayout>
+  <SEO slot="head" title={`${year}年${Number(month)}月 归档`} description={`${year}年${Number(month)}月发布的文章`} />
+  <Header />
+  <main class="flex-1 max-w-4xl mx-auto px-4 py-12 w-full">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">{year}年{Number(month)}月</h1>
+    <PostList posts={monthPosts} />
+  </main>
+  <Footer />
+</BaseLayout>

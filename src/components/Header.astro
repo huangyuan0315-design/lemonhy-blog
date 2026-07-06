@@ -1,0 +1,33 @@
+---
+import { SITE } from "../lib/constants";
+import ThemeToggle from "./ThemeToggle.svelte";
+---
+
+<header class="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur border-b border-gray-200 dark:border-gray-800">
+  <nav class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+    <a href="/" class="text-xl font-bold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+      {SITE.title}
+    </a>
+
+    <div class="flex items-center gap-1 text-sm">
+      <a href="/blog" class="px-3 py-2 rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        文章
+      </a>
+      <a href="/blog/archive" class="px-3 py-2 rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        归档
+      </a>
+      <a href="/blog/category" class="px-3 py-2 rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        分类
+      </a>
+      <a href="/blog/tag" class="px-3 py-2 rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        标签
+      </a>
+      <a href="/about" class="px-3 py-2 rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        关于
+      </a>
+      <div class="ml-2">
+        <ThemeToggle client:load />
+      </div>
+    </div>
+  </nav>
+</header>

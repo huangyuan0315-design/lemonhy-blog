@@ -1,0 +1,31 @@
+backend:
+  name: github
+  repo: huangyuan/lemonhy-blog
+  branch: main
+  base_url: https://lemonhy.pages.dev
+  auth_endpoint: /api/auth
+
+media_folder: "public/images"
+public_folder: "/images"
+
+collections:
+  - name: "posts"
+    label: "文章"
+    label_singular: "文章"
+    folder: "src/content/posts"
+    path: "{{category}}/{{pubDate}}-{{slug}}"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "标题", name: "title", widget: "string" }
+      - { label: "描述", name: "description", widget: "text" }
+      - { label: "发布日期", name: "pubDate", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: "更新日期", name: "updatedDate", widget: "datetime", required: false, date_format: "YYYY-MM-DD", time_format: false }
+      - { label: "分类", name: "category", widget: "select", options: ["tech", "life"] }
+      - { label: "标签", name: "tags", widget: "list", default: [] }
+      - { label: "草稿", name: "draft", widget: "boolean", default: false }
+      - { label: "正文", name: "body", widget: "markdown" }
+
+locale: zh_Hans
+site_url: https://lemonhy.pages.dev
+display_url: https://lemonhy.pages.dev

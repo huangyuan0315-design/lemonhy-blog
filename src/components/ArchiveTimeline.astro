@@ -1,0 +1,61 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  posts: CollectionEntry<"posts">[];
+}
+
+const { posts } = Astro.props;
+
+const grouped = posts.reduce(
+  (acc, post) => {
+    const year = post.data.pubDate.getFullYear().toString();
+    const month = (post.data.pubDate.getMonth() + 1).toString().padStart(2, "0");
+    if (!acc[year]) acc[year] = {};
+    if (!acc[year][month]) acc[year][month] = [];
+    acc[year][month].push(post);
+    return acc;
+  },
+  {} as Record<string, Record<string, CollectionEntry<"posts">[]>>
+);
+
+const years = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
+---
+
+<div>
+  {years.map((year) => (
+    <div class="mb-8">
+      <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4 sticky top-14 bg-white/90 dark:bg-gray-950/90 backdrop-blur py-2 z-10">
+        {year}
+      </h3>
+      {Object.keys(grouped[year])
+        .sort((a, b) => Number(b) - Number(a))
+        .map((month) => (
+          <div class="ml-2 mb-4">
+            <h4 class="text-sm font-medium text-gray-400 dark:text-gray-500 mb-3 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
+              {year}年{Number(month)}月
+            </h4>
+            <div class="space-y-1">
+              {grouped[year][month].map((post) => (
+                  <a
+                    href={`/blog/${post.id}`}
+                    class="flex items-center gap-3 pl-4 py-1.5 rounded-md text-sm hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
+                  >
+                    <span class="text-xs text-gray-400 dark:text-gray-500 w-10 shrink-0">
+                      {post.data.pubDate.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" })}
+                    </span>
+                    <span class="text-gray-700 dark:text-gray-300 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">
+                      {post.data.title}
+                    </span>
+                  </a>
+              ))}
+            </div>
+          </div>
+        ))}
+    </div>
+  ))}
+
+  {posts.length === 0 && (
+    <p class="text-center text-gray-500 dark:text-gray-400 py-12">暂无文章</p>
+  )}
+</div>

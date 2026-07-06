@@ -1,0 +1,52 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  posts: CollectionEntry<"posts">[];
+  title?: string;
+}
+
+const { posts, title } = Astro.props;
+---
+
+{title && <h2 class="text-xl font-bold mb-6 text-gray-900 dark:text-white">{title}</h2>}
+
+<div class="divide-y divide-gray-100 dark:divide-gray-800">
+  {posts.map((post) => (
+    <article class="py-6 first:pt-0 last:pb-0">
+      <a href={`/blog/${post.id}`} class="group block">
+        <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
+          <time datetime={post.data.pubDate.toISOString()}>
+            {post.data.pubDate.toLocaleDateString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" })}
+          </time>
+          <span class="inline-block w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+          <a href={`/blog/category/${post.data.category}`} class="text-primary-600 dark:text-primary-400 hover:underline">
+            {post.data.category}
+          </a>
+        </div>
+
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors mb-1.5">
+          {post.data.title}
+        </h3>
+
+        <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
+          {post.data.description}
+        </p>
+
+        {post.data.tags.length > 0 && (
+          <div class="flex flex-wrap gap-1.5 mt-3">
+            {post.data.tags.map((tag) => (
+              <a href={`/blog/tag/${tag}`} class="inline-block px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-primary-100 dark:hover:bg-primary-900 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                #{tag}
+              </a>
+            ))}
+          </div>
+        )}
+      </a>
+    </article>
+  ))}
+</div>
+
+{posts.length === 0 && (
+  <p class="text-center text-gray-500 dark:text-gray-400 py-12">暂无文章</p>
+)}

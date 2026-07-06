@@ -1,0 +1,28 @@
+---
+import { getCollection } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+import BaseLayout from "../../../components/BaseLayout.astro";
+import Header from "../../../components/Header.astro";
+import Footer from "../../../components/Footer.astro";
+import SEO from "../../../components/SEO.astro";
+import ArchiveTimeline from "../../../components/ArchiveTimeline.astro";
+
+const allPosts = await getCollection("posts");
+const published = allPosts
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+---
+
+<BaseLayout>
+  <SEO
+    slot="head"
+    title="文章归档"
+    description="按时间线浏览所有文章"
+  />
+  <Header />
+  <main class="flex-1 max-w-4xl mx-auto px-4 py-12 w-full">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">文章归档</h1>
+    <ArchiveTimeline posts={published} />
+  </main>
+  <Footer />
+</BaseLayout>
