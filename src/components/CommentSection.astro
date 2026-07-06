@@ -13,9 +13,11 @@ const { postSlug } = Astro.props;
 </div>
 
 <script define:vars={{ postSlug }}>
-  const slug = postSlug;
-  const listEl = document.getElementById("comment-list")!;
-  const formContainer = document.getElementById("comment-form-container")!;
+  (function () {
+    const slug = postSlug;
+    const listEl = document.getElementById("comment-list");
+    const formContainer = document.getElementById("comment-form-container");
+    if (!listEl || !formContainer) return;
 
   function escapeHtml(text) {
     const div = document.createElement("div");
@@ -72,11 +74,14 @@ const { postSlug } = Astro.props;
     </form>
   `;
 
-  document.getElementById("comment-form")!.addEventListener("submit", async (e) => {
+  const commentForm = document.getElementById("comment-form");
+  if (!commentForm) return;
+  commentForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const form = e.target;
-    const msg = document.getElementById("comment-msg")!;
-    const btn = form.querySelector("button")!;
+    const msg = document.getElementById("comment-msg");
+    const btn = form.querySelector("button");
+    if (!msg || !btn) return;
 
     btn.disabled = true;
     btn.textContent = "提交中...";
@@ -112,4 +117,5 @@ const { postSlug } = Astro.props;
   });
 
   loadComments();
+  })();
 </script>
