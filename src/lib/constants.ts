@@ -2,7 +2,7 @@ export const SITE = {
   title: "lemonhy",
   author: "huangyuan",
   description: "技术写作与生活记录",
-  url: "https://huangyuan-blog.pages.dev",
+  url: "https://lemonhy-blog.huangyuan0315.workers.dev",
   locale: "zh-CN",
 } as const;
 

@@ -6,7 +6,7 @@ import expressiveCode from "astro-expressive-code";
 
 export default defineConfig({
   output: "static",
-  site: "https://huangyuan-blog.pages.dev",
+  site: "https://lemonhy-blog.huangyuan0315.workers.dev",
   integrations: [
     expressiveCode({
       useDarkModeMediaQuery: false,
