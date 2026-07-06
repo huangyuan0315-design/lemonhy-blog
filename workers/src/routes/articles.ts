@@ -62,7 +62,8 @@ app.get("/api/admin/articles/:category/:slug", adminAuth, async (c) => {
 app.post("/api/admin/articles", adminAuth, async (c) => {
   try {
     const { title, description, pubDate, category, tags, body } = await c.req.json();
-    const slug = pubDate.slice(0, 10) + "-" + title.toLowerCase().replace(/\s+/g, "-").replace(/[^\w\-]/g, "");
+    const safeTitle = title.replace(/\s+/g, "-").replace(/[\/\\?#\[\]@!$&'()*+,;=<>%{}|^~\`"]/g, "").replace(/-{2,}/g, "-").replace(/^-|-$/g, "");
+    const slug = pubDate.slice(0, 10) + (safeTitle ? "-" + safeTitle : "");
     const path = `${POSTS_DIR}/${category}/${slug}.md`;
     const content = buildFrontmatter({ title, description, pubDate, category, tags }, body);
     await createOrUpdateFile(c.env.GITHUB_TOKEN, path, content);
@@ -83,7 +84,8 @@ app.put("/api/admin/articles/:category/:slug", adminAuth, async (c) => {
     if (!oldFile) return c.json({ error: "Not found" }, { status: 404 });
 
     const newCat = category || cat;
-    const newSlug = pubDate ? pubDate.slice(0, 10) + "-" + title.toLowerCase().replace(/\s+/g, "-").replace(/[^\w\-]/g, "") : slug;
+    const newSafeTitle = title ? title.replace(/\s+/g, "-").replace(/[\/\\?#\[\]@!$&'()*+,;=<>%{}|^~\`"]/g, "").replace(/-{2,}/g, "-").replace(/^-|-$/g, "") : "";
+    const newSlug = pubDate ? pubDate.slice(0, 10) + (newSafeTitle ? "-" + newSafeTitle : "") : slug;
     const path = `${POSTS_DIR}/${newCat}/${newSlug}.md`;
     const content = buildFrontmatter(
       { title, description, pubDate, category: newCat, tags },
