@@ -4,9 +4,12 @@ import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import expressiveCode from "astro-expressive-code";
 
+import cloudflare from "@astrojs/cloudflare";
+
 export default defineConfig({
   output: "static",
   site: "https://lemonhy-blog.huangyuan0315.workers.dev",
+
   integrations: [
     expressiveCode({
       useDarkModeMediaQuery: false,
@@ -16,10 +19,14 @@ export default defineConfig({
     svelte(),
     sitemap(),
   ],
+
   vite: {
     plugins: [tailwindcss()],
   },
+
   markdown: {
     remarkPlugins: [],
   },
+
+  adapter: cloudflare(),
 });
