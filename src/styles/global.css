@@ -98,6 +98,15 @@ img, video {
   @apply rounded-xl;
 }
 
+/* Article images — shadow for depth */
+.prose img {
+  box-shadow: 0 4px 24px rgb(0 0 0 / 0.12), 0 2px 8px rgb(0 0 0 / 0.08);
+}
+
+.dark .prose img {
+  box-shadow: 0 4px 24px rgb(0 0 0 / 0.4), 0 2px 8px rgb(0 0 0 / 0.25);
+}
+
 input, textarea, select, button:not(.no-radius) {
   @apply rounded-xl;
 }
