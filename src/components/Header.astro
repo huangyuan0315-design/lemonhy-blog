@@ -25,6 +25,10 @@ import ThemeToggle from "./ThemeToggle.svelte";
       <a href="/about" class="px-3 py-2 rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
         关于
       </a>
+      <span class="text-gray-300 dark:text-gray-600 mx-1">|</span>
+      <a href="/admin" class="px-3 py-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        管理
+      </a>
       <div class="ml-2">
         <ThemeToggle client:load />
       </div>

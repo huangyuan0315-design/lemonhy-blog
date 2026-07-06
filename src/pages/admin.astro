@@ -1,0 +1,421 @@
+---
+import BaseLayout from "../components/BaseLayout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import SEO from "../components/SEO.astro";
+---
+
+<BaseLayout>
+  <SEO slot="head" title="管理后台" description="博客管理后台" />
+  <Header />
+  <main class="flex-1 w-full" id="admin-root">
+    <div id="login-panel"></div>
+    <div id="dashboard" class="hidden"></div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<script>
+  const API = "https://lemonhy-comments-api.huangyuan0315.workers.dev";
+
+  function token() { return sessionStorage.getItem("admin_token") || ""; }
+  function auth() { return { Authorization: `Bearer ${token()}` }; }
+  function esc(s: string) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+  function fmt(d: string) { return new Date(d).toLocaleDateString("zh-CN"); }
+
+  // ── Init ──
+  if (token()) showDashboard(); else showLogin();
+
+  // ── Login ──
+  function showLogin() {
+    document.getElementById("login-panel")!.innerHTML = `
+      <div class="min-h-[60vh] flex items-center justify-center px-4">
+        <div class="w-full max-w-sm">
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">管理员登录</h1>
+          <form id="login-form" class="space-y-4">
+            <input type="password" name="password" required autofocus placeholder="管理员密码"
+              class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm" />
+            <p id="login-msg" class="text-sm text-red-500 hidden"></p>
+            <button type="submit" class="w-full py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors cursor-pointer font-medium text-sm">
+              登录
+            </button>
+          </form>
+        </div>
+      </div>`;
+    document.getElementById("login-form")!.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const pwd = (e.target as HTMLFormElement).elements.namedItem("password") as HTMLInputElement;
+      const msg = document.getElementById("login-msg")!;
+      try {
+        const res = await fetch(`${API}/api/admin/comments`, { headers: { Authorization: `Bearer ${pwd.value.trim()}` } });
+        if (res.ok) { sessionStorage.setItem("admin_token", pwd.value.trim()); showDashboard(); }
+        else { msg.textContent = "密码错误"; msg.classList.remove("hidden"); }
+      } catch { msg.textContent = "网络错误"; msg.classList.remove("hidden"); }
+    });
+  }
+
+  // ── Dashboard ──
+  function showDashboard() {
+    document.getElementById("login-panel")!.innerHTML = "";
+    document.getElementById("dashboard")!.classList.remove("hidden");
+    document.getElementById("dashboard")!.innerHTML = `
+    <div class="max-w-6xl mx-auto px-4 py-8">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white">管理后台</h1>
+        <button id="logout-btn" class="px-3 py-1.5 text-sm text-gray-400 hover:text-red-500 transition-colors cursor-pointer">退出</button>
+      </div>
+      <div class="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700" id="tabs"></div>
+      <div id="tab-content"></div>
+    </div>`;
+    document.getElementById("logout-btn")!.onclick = () => { sessionStorage.removeItem("admin_token"); location.reload(); };
+    renderTabs("comments");
+    loadCommentsContent();
+  }
+
+  // ── Tabs ──
+  function renderTabs(active: string) {
+    const tabs = [
+      { key: "comments", label: "评论管理" },
+      { key: "articles", label: "文章管理" },
+      { key: "images", label: "图片管理" },
+    ];
+    document.getElementById("tabs")!.innerHTML = tabs.map(t => `
+      <button data-tab="${t.key}" class="px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors border-b-2 -mb-px ${
+        active === t.key
+          ? "border-primary-600 text-primary-600 dark:text-primary-400"
+          : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+      }">${t.label}</button>`).join("");
+    document.querySelectorAll("[data-tab]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const key = (btn as HTMLElement).dataset.tab!;
+        renderTabs(key);
+        if (key === "comments") loadCommentsContent();
+        else if (key === "articles") loadArticlesContent();
+        else loadImagesContent();
+      });
+    });
+  }
+
+  // ══════ COMMENTS ══════
+  async function loadCommentsContent() {
+    const c = document.getElementById("tab-content")!;
+    c.innerHTML = `<div class="flex gap-2 mb-4" id="comment-tabs"></div><div id="comment-list" class="space-y-3"></div>`;
+    renderCommentStatusTabs("pending");
+    loadComments("pending");
+  }
+  function renderCommentStatusTabs(active: string) {
+    const tabs = [{ k: "pending", l: "待审核" }, { k: "approved", l: "已通过" }, { k: "spam", l: "垃圾" }];
+    document.getElementById("comment-tabs")!.innerHTML = tabs.map(t => `
+      <button data-ctab="${t.k}" class="px-3 py-1.5 text-xs rounded-full cursor-pointer transition-colors ${
+        active === t.k ? "bg-primary-600 text-white" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+      }">${t.l}</button>`).join("");
+    document.querySelectorAll("[data-ctab]").forEach(b => b.addEventListener("click", () => {
+      const k = (b as HTMLElement).dataset.ctab!;
+      renderCommentStatusTabs(k);
+      loadComments(k);
+    }));
+  }
+  async function loadComments(status: string) {
+    const list = document.getElementById("comment-list")!;
+    list.innerHTML = '<p class="text-gray-400 text-sm py-8 text-center">加载中...</p>';
+    try {
+      const res = await fetch(`${API}/api/admin/comments?status=${status}`, { headers: auth() });
+      const comments = await res.json();
+      if (!Array.isArray(comments) || comments.length === 0) {
+        list.innerHTML = '<p class="text-gray-400 text-sm py-8 text-center">暂无评论</p>'; return;
+      }
+      list.innerHTML = comments.map((c: any) => `
+      <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/30">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span class="text-sm font-medium text-gray-900 dark:text-white">${esc(c.author)}</span>
+              <span class="text-xs text-gray-400">${new Date(c.created_at).toLocaleString("zh-CN")}</span>
+              <span class="text-xs px-1.5 py-0.5 rounded ${statusBadge(c.status)}">${statusLabel(c.status)}</span>
+            </div>
+            <p class="text-xs text-gray-400 mb-1">${esc(c.post_slug)}</p>
+            <p class="text-sm text-gray-700 dark:text-gray-300">${esc(c.body)}</p>
+          </div>
+          <div class="flex gap-1 shrink-0">${actionBtns(c)}</div>
+        </div>
+      </div>`).join("");
+      bindCommentActions();
+    } catch { list.innerHTML = '<p class="text-red-500 text-sm py-8 text-center">加载失败</p>'; }
+  }
+  function statusBadge(s: string) { return { pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400", approved: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400", spam: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" }[s] || ""; }
+  function statusLabel(s: string) { return { pending: "待审", approved: "已通过", spam: "垃圾" }[s] || s; }
+  function actionBtns(c: any) {
+    let b = "";
+    if (c.status !== "approved") b += `<button data-approve="${c.id}" class="px-2 py-1 text-xs rounded bg-green-600 hover:bg-green-700 text-white cursor-pointer" title="批准">✓</button>`;
+    if (c.status !== "spam") b += `<button data-spam="${c.id}" class="px-2 py-1 text-xs rounded bg-yellow-600 hover:bg-yellow-700 text-white cursor-pointer" title="垃圾">✗</button>`;
+    if (c.status !== "pending") b += `<button data-pending="${c.id}" class="px-2 py-1 text-xs rounded bg-gray-600 hover:bg-gray-700 text-white cursor-pointer" title="待审">⟲</button>`;
+    b += `<button data-delete="${c.id}" class="px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700 text-white cursor-pointer" title="删除">删</button>`;
+    return b;
+  }
+  function bindCommentActions() {
+    const list = document.getElementById("comment-list")!;
+    (["approve","spam","pending"] as const).forEach(act => {
+      list.querySelectorAll(`[data-${act}]`).forEach(b => b.addEventListener("click", async () => {
+        await fetch(`${API}/api/admin/comments/${(b as HTMLElement).dataset[act]}`, { method: "PATCH", headers: { ...auth(), "Content-Type": "application/json" }, body: JSON.stringify({ status: act === "approve" ? "approved" : act }) });
+        const t = (document.querySelector("[data-ctab].bg-primary-600") as HTMLElement)?.dataset.ctab || "pending";
+        loadComments(t);
+      }));
+    });
+    list.querySelectorAll("[data-delete]").forEach(b => b.addEventListener("click", async () => {
+      if (!confirm("确定删除？")) return;
+      await fetch(`${API}/api/admin/comments/${(b as HTMLElement).dataset.delete}`, { method: "DELETE", headers: auth() });
+      const t = (document.querySelector("[data-ctab].bg-primary-600") as HTMLElement)?.dataset.ctab || "pending";
+      loadComments(t);
+    }));
+  }
+
+  // ══════ ARTICLES ══════
+  async function loadArticlesContent() {
+    const c = document.getElementById("tab-content")!;
+    c.innerHTML = `
+      <div class="flex justify-between items-center mb-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400" id="article-count"></p>
+        <button id="new-article-btn" class="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">+ 新建文章</button>
+      </div>
+      <div id="article-list" class="space-y-2"></div>
+      <div id="article-editor" class="hidden"></div>`;
+    document.getElementById("new-article-btn")!.onclick = () => showArticleEditor();
+    await refreshArticles();
+  }
+
+  async function refreshArticles() {
+    const list = document.getElementById("article-list")!;
+    list.innerHTML = '<p class="text-gray-400 text-sm py-8 text-center">加载中...</p>';
+    try {
+      const res = await fetch(`${API}/api/admin/articles`, { headers: auth() });
+      const articles = await res.json();
+      document.getElementById("article-count")!.textContent = `共 ${articles.length} 篇文章`;
+      if (!articles.length) { list.innerHTML = '<p class="text-gray-400 text-sm py-8 text-center">暂无文章</p>'; return; }
+      list.innerHTML = articles.map((a: any) => `
+      <div class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+        <div class="flex-1 min-w-0 mr-4">
+          <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${esc(a.title || "无标题")}</p>
+          <p class="text-xs text-gray-400 mt-0.5">${fmt(a.pubDate)} · ${esc(a.category || "")} · <span class="text-primary-500">${(a.tags||[]).map((t:string)=>`#${t}`).join(" ")}</span></p>
+        </div>
+        <div class="flex gap-1 shrink-0">
+          <button data-edit-path="${esc(a.path)}" class="px-3 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors">编辑</button>
+          <button data-del-path="${esc(a.path)}" class="px-3 py-1 text-xs rounded bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 cursor-pointer transition-colors">删除</button>
+        </div>
+      </div>`).join("");
+      bindArticleActions();
+    } catch { list.innerHTML = '<p class="text-red-500 text-sm py-8 text-center">加载失败</p>'; }
+  }
+
+  function bindArticleActions() {
+    document.querySelectorAll("[data-edit-path]").forEach(b => b.addEventListener("click", async () => {
+      const path = (b as HTMLElement).dataset.editPath!;
+      const parts = path.replace("src/content/posts/", "").replace(".md", "").split("/");
+      const cat = parts[0], slug = parts.slice(1).join("/");
+      const res = await fetch(`${API}/api/admin/articles/${cat}/${slug}`, { headers: auth() });
+      if (res.ok) { const data = await res.json(); showArticleEditor(data); }
+    }));
+    document.querySelectorAll("[data-del-path]").forEach(b => b.addEventListener("click", async () => {
+      if (!confirm("确定删除这篇文章？")) return;
+      const path = (b as HTMLElement).dataset.delPath!.replace("src/content/posts/", "").replace(".md", "");
+      const parts = path.split("/");
+      await fetch(`${API}/api/admin/articles/${parts[0]}/${parts.slice(1).join("/")}`, { method: "DELETE", headers: auth() });
+      refreshArticles();
+    }));
+  }
+
+  function showArticleEditor(data?: any) {
+    const isEdit = !!data;
+    const fm = data?.frontmatter || {};
+    const editor = document.getElementById("article-editor")!;
+    document.getElementById("article-list")!.classList.add("hidden");
+    document.getElementById("new-article-btn")!.classList.add("hidden");
+    document.getElementById("article-count")!.classList.add("hidden");
+
+    editor.classList.remove("hidden");
+    editor.innerHTML = `
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">${isEdit ? "编辑文章" : "新建文章"}</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div class="sm:col-span-3">
+          <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">标题</label>
+          <input id="af-title" value="${esc(fm.title || "")}" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-primary-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">日期</label>
+          <input id="af-date" type="date" value="${(fm.pubDate || new Date().toISOString().slice(0,10))}" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-primary-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">分类</label>
+          <select id="af-cat" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-primary-500">
+            <option value="tech" ${fm.category==="tech"?"selected":""}>tech</option>
+            <option value="life" ${fm.category==="life"?"selected":""}>life</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">标签 (逗号分隔)</label>
+          <input id="af-tags" value="${esc((fm.tags||[]).join(","))}" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-primary-500" />
+        </div>
+        <div class="sm:col-span-3">
+          <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">描述</label>
+          <input id="af-desc" value="${esc(fm.description || "")}" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-primary-500" />
+        </div>
+      </div>
+      <div class="mb-4">
+        <div class="flex items-center justify-between mb-1">
+          <label class="text-xs font-medium text-gray-500 dark:text-gray-400">正文 (Markdown)</label>
+          <label id="img-upload-label" class="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors">
+            📷 插入图片
+            <input type="file" id="af-img-input" accept="image/*" multiple class="hidden" />
+          </label>
+        </div>
+        <textarea id="af-body" rows="18" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm font-mono outline-none focus:ring-2 focus:ring-primary-500 resize-y">${esc(data?.body || "")}</textarea>
+        <p id="af-upload-status" class="text-xs text-gray-400 mt-1 hidden"></p>
+      </div>
+      <div class="flex gap-2">
+        <button id="af-save" class="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">${isEdit ? "保存修改" : "发布文章"}</button>
+        <button id="af-cancel" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors">取消</button>
+        <p id="af-msg" class="text-sm self-center"></p>
+      </div>
+      <input type="hidden" id="af-old-path" value="${esc(data?.path || "")}" />
+    </div>`;
+
+    // Image upload handler
+    document.getElementById("af-img-input")!.addEventListener("change", async (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (!files?.length) return;
+      const status = document.getElementById("af-upload-status")!;
+      status.textContent = "上传中..."; status.classList.remove("hidden");
+      const uploads = await Promise.all(
+        Array.from(files).map(async (f) => {
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve((reader.result as string).split(",")[1]);
+            reader.readAsDataURL(f);
+          });
+          return { name: f.name, data: base64 };
+        })
+      );
+      try {
+        await fetch(`${API}/api/admin/images`, { method: "POST", headers: { ...auth(), "Content-Type": "application/json" }, body: JSON.stringify({ files: uploads }) });
+        const ta = document.getElementById("af-body") as HTMLTextAreaElement;
+        const mdImgs = uploads.map(u => `![${u.name}](/images/${u.name})`).join("\n");
+        ta.value = ta.value + "\n" + mdImgs + "\n";
+        status.textContent = `已上传 ${uploads.length} 张图片`; status.classList.remove("hidden");
+      } catch { status.textContent = "上传失败"; }
+    });
+
+    document.getElementById("af-cancel")!.onclick = () => {
+      editor.classList.add("hidden");
+      document.getElementById("article-list")!.classList.remove("hidden");
+      document.getElementById("new-article-btn")!.classList.remove("hidden");
+      document.getElementById("article-count")!.classList.remove("hidden");
+    };
+
+    document.getElementById("af-save")!.onclick = async () => {
+      const title = (document.getElementById("af-title") as HTMLInputElement).value.trim();
+      const pubDate = (document.getElementById("af-date") as HTMLInputElement).value;
+      const category = (document.getElementById("af-cat") as HTMLSelectElement).value;
+      const tags = (document.getElementById("af-tags") as HTMLInputElement).value.split(",").map(t => t.trim()).filter(Boolean);
+      const description = (document.getElementById("af-desc") as HTMLInputElement).value.trim();
+      const body = (document.getElementById("af-body") as HTMLTextAreaElement).value;
+      const msg = document.getElementById("af-msg")!;
+      const oldPath = (document.getElementById("af-old-path") as HTMLInputElement).value;
+
+      if (!title) { msg.textContent = "请输入标题"; msg.className = "text-sm text-red-500"; return; }
+
+      const payload = { title, description, pubDate, category, tags, body };
+      msg.textContent = "保存中..."; msg.className = "text-sm text-yellow-500";
+
+      try {
+        let res;
+        if (isEdit && oldPath) {
+          const parts = oldPath.replace("src/content/posts/", "").replace(".md", "").split("/");
+          res = await fetch(`${API}/api/admin/articles/${parts[0]}/${parts.slice(1).join("/")}`, { method: "PUT", headers: { ...auth(), "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        } else {
+          res = await fetch(`${API}/api/admin/articles`, { method: "POST", headers: { ...auth(), "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        }
+        if (res.ok) {
+          msg.textContent = "保存成功！等待 Pages 构建后生效";
+          msg.className = "text-sm text-green-500";
+          setTimeout(() => { document.getElementById("af-cancel")!.click(); refreshArticles(); }, 1500);
+        } else {
+          const err = await res.json();
+          msg.textContent = "保存失败: " + (err.error || "");
+          msg.className = "text-sm text-red-500";
+        }
+      } catch { msg.textContent = "网络错误"; msg.className = "text-sm text-red-500"; }
+    };
+  }
+
+  // ══════ IMAGES ══════
+  async function loadImagesContent() {
+    const c = document.getElementById("tab-content")!;
+    c.innerHTML = `
+      <div class="flex justify-between items-center mb-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400" id="img-count"></p>
+        <div class="flex gap-2">
+          <button id="img-delete-selected" class="px-3 py-1.5 text-xs rounded bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 cursor-pointer transition-colors hidden">删除选中</button>
+          <label class="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 cursor-pointer transition-colors">
+            上传图片
+            <input type="file" id="img-upload-input" accept="image/*" multiple class="hidden" />
+          </label>
+        </div>
+      </div>
+      <p id="img-upload-status" class="text-xs text-gray-400 mb-3 hidden"></p>
+      <div id="img-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>`;
+
+    document.getElementById("img-upload-input")!.addEventListener("change", async (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (!files?.length) return;
+      const status = document.getElementById("img-upload-status")!;
+      status.textContent = "上传中..."; status.classList.remove("hidden");
+      const uploads = await Promise.all(
+        Array.from(files).map(async (f) => {
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve((reader.result as string).split(",")[1]);
+            reader.readAsDataURL(f);
+          });
+          return { name: f.name, data: base64 };
+        })
+      );
+      try {
+        await fetch(`${API}/api/admin/images`, { method: "POST", headers: { ...auth(), "Content-Type": "application/json" }, body: JSON.stringify({ files: uploads }) });
+        status.textContent = `已上传 ${uploads.length} 张图片`;
+        setTimeout(() => status.classList.add("hidden"), 2000);
+        refreshImages();
+      } catch { status.textContent = "上传失败"; }
+    });
+
+    await refreshImages();
+  }
+
+  async function refreshImages() {
+    const grid = document.getElementById("img-grid")!;
+    grid.innerHTML = '<p class="col-span-full text-gray-400 text-sm py-8 text-center">加载中...</p>';
+    try {
+      const res = await fetch(`${API}/api/admin/images`, { headers: auth() });
+      const images = await res.json();
+      document.getElementById("img-count")!.textContent = `共 ${images.length} 张图片`;
+      if (!images.length) { grid.innerHTML = '<p class="col-span-full text-gray-400 text-sm py-8 text-center">暂无图片</p>'; return; }
+      document.getElementById("img-delete-selected")!.classList.remove("hidden");
+      grid.innerHTML = images.map((img: any) => `
+      <div class="group relative rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30 overflow-hidden" data-img="${img.name}">
+        <img src="${img.url}" alt="${img.name}" class="w-full h-32 object-cover" loading="lazy" onerror="this.style.display='none'" />
+        <div class="p-1.5 flex items-center justify-between">
+          <span class="text-xs text-gray-500 dark:text-gray-400 truncate block flex-1" title="${img.name}">${img.name.length > 12 ? img.name.slice(0,10)+".." : img.name}</span>
+          <input type="checkbox" class="img-check w-3.5 h-3.5" data-name="${img.name}" />
+        </div>
+        <button class="absolute top-1 right-1 w-5 h-5 rounded bg-black/50 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" title="复制链接" onclick="navigator.clipboard.writeText('/images/${img.name}').then(()=>alert('已复制'))">📋</button>
+      </div>`).join("");
+
+      document.getElementById("img-delete-selected")!.onclick = async () => {
+        const names = Array.from(document.querySelectorAll<HTMLInputElement>(".img-check:checked")).map(cb => cb.dataset.name!).filter(Boolean);
+        if (!names.length) return;
+        if (!confirm(`确定删除 ${names.length} 张图片？`)) return;
+        await fetch(`${API}/api/admin/images`, { method: "DELETE", headers: { ...auth(), "Content-Type": "application/json" }, body: JSON.stringify({ names }) });
+        refreshImages();
+      };
+    } catch { grid.innerHTML = '<p class="col-span-full text-red-500 text-sm py-8 text-center">加载失败</p>'; }
+  }
+</script>
