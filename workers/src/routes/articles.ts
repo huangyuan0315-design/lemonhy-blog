@@ -12,12 +12,11 @@ import {
 } from "../github";
 
 const app = new Hono<{ Bindings: Bindings }>();
-app.use("/*", adminAuth);
 
 const POSTS_DIR = "src/content/posts";
 
 // LIST
-app.get("/api/admin/articles", async (c) => {
+app.get("/api/admin/articles", adminAuth, async (c) => {
   try {
     const files = await listDir(c.env.GITHUB_TOKEN, POSTS_DIR);
     // Expand subdirs
@@ -46,7 +45,7 @@ app.get("/api/admin/articles", async (c) => {
 });
 
 // GET single
-app.get("/api/admin/articles/:category/:slug", async (c) => {
+app.get("/api/admin/articles/:category/:slug", adminAuth, async (c) => {
   try {
     const { category, slug } = c.req.param();
     const path = `${POSTS_DIR}/${category}/${slug}.md`;
@@ -60,7 +59,7 @@ app.get("/api/admin/articles/:category/:slug", async (c) => {
 });
 
 // CREATE
-app.post("/api/admin/articles", async (c) => {
+app.post("/api/admin/articles", adminAuth, async (c) => {
   try {
     const { title, description, pubDate, category, tags, body } = await c.req.json();
     const slug = pubDate.slice(0, 10) + "-" + title.toLowerCase().replace(/\s+/g, "-").replace(/[^\w\-]/g, "");
@@ -75,7 +74,7 @@ app.post("/api/admin/articles", async (c) => {
 });
 
 // UPDATE
-app.put("/api/admin/articles/:category/:slug", async (c) => {
+app.put("/api/admin/articles/:category/:slug", adminAuth, async (c) => {
   try {
     const { title, description, pubDate, category, tags, body } = await c.req.json();
     const { category: cat, slug } = c.req.param();
@@ -103,7 +102,7 @@ app.put("/api/admin/articles/:category/:slug", async (c) => {
 });
 
 // DELETE
-app.delete("/api/admin/articles/:category/:slug", async (c) => {
+app.delete("/api/admin/articles/:category/:slug", adminAuth, async (c) => {
   try {
     const { category, slug } = c.req.param();
     const path = `${POSTS_DIR}/${category}/${slug}.md`;
