@@ -6,12 +6,14 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro check && astro build",
-    "preview": "astro preview",
-    "astro": "astro"
+    "preview": "npm run build && wrangler dev",
+    "astro": "astro",
+    "generate-types": "wrangler types",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.9",
-    "@astrojs/cloudflare": "^14.0.0",
+    "@astrojs/cloudflare": "^14.1.1",
     "@astrojs/rss": "^4.0.0",
     "@astrojs/sitemap": "^3.7.0",
     "@astrojs/svelte": "^9.0.0",
