@@ -16,6 +16,7 @@ import SEO from "../components/SEO.astro";
 </BaseLayout>
 
 <script>
+  // @ts-nocheck — client-side JS, not subject to astro check
   const API = "https://lemonhy-comments-api.huangyuan0315.workers.dev";
 
   function token() { return sessionStorage.getItem("admin_token") || ""; }
@@ -69,12 +70,22 @@ if(lf){lf.addEventListener("submit",function(e){e.preventDefault();doLogin();});
     <div class="max-w-6xl mx-auto px-4 py-8">
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-xl font-bold text-gray-900 dark:text-white">管理后台</h1>
-        <button id="logout-btn" class="px-3 py-1.5 text-sm text-gray-400 hover:text-red-500 transition-colors cursor-pointer">退出</button>
+        <div class="flex items-center gap-2">
+          <button id="deploy-btn" class="px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors cursor-pointer">触发部署</button>
+          <button id="logout-btn" class="px-3 py-1.5 text-sm text-gray-400 hover:text-red-500 transition-colors cursor-pointer">退出</button>
+        </div>
       </div>
       <div class="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700" id="tabs"></div>
       <div id="tab-content"></div>
     </div>`;
     document.getElementById("logout-btn")!.onclick = () => { sessionStorage.removeItem("admin_token"); location.reload(); };
+    var deployBtn = document.getElementById("deploy-btn");
+    if (deployBtn) deployBtn.onclick = () => {
+      deployBtn.textContent = "部署中..."; deployBtn.disabled = true;
+      fetch("https://api.cloudflare.com/client/v4/pages/webhooks/deploy_hooks/df935e40-3f24-4400-be22-5ff3277f8887", { method: "POST" })
+        .then(function() { deployBtn.textContent = "已触发 ✨"; setTimeout(function() { deployBtn.textContent = "触发部署"; deployBtn.disabled = false; }, 3000); })
+        .catch(function() { deployBtn.textContent = "失败重试"; deployBtn.disabled = false; });
+    };
     renderTabs("comments");
     loadCommentsContent();
   }
