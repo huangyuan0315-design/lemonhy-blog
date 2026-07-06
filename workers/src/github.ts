@@ -1,5 +1,12 @@
 const REPO = "huangyuan0315-design/lemonhy-blog";
 
+export async function triggerDeploy(hookId: string) {
+  if (!hookId) return;
+  await fetch(`https://api.cloudflare.com/client/v4/pages/webhook/deploy_hooks/${hookId}`, {
+    method: "POST",
+  });
+}
+
 function headers(token: string) {
   return {
     Authorization: `Bearer ${token}`,

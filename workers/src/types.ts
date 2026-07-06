@@ -3,6 +3,7 @@ export interface Bindings {
   ADMIN_PASSWORD: string;
   ALLOWED_ORIGIN: string;
   GITHUB_TOKEN: string;
+  DEPLOY_HOOK_ID: string;
 }
 
 export interface Comment {

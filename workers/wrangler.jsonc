@@ -11,6 +11,7 @@
   ],
   "vars": {
     "ADMIN_PASSWORD": "lemonhy-admin-2026!xK9#mP2",
-    "ALLOWED_ORIGIN": "https://huangyuan-blog.pages.dev"
+    "ALLOWED_ORIGIN": "https://huangyuan-blog.pages.dev",
+    "DEPLOY_HOOK_ID": "df935e40-3f24-4400-be22-5ff3277f8887"
   }
 }

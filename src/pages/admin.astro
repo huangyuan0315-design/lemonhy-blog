@@ -21,6 +21,9 @@ import SEO from "../components/SEO.astro";
   function token() { return sessionStorage.getItem("admin_token") || ""; }
   function auth() { return { Authorization: `Bearer ${token()}` }; }
   function esc(s: string) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+  function readExifDate(b){var d=new DataView(b);if(d.getUint16(0)!==0xffd8)return null;var o=2;while(o<d.byteLength-10){if(d.getUint16(o)===0xffe1){var es=o+4;if(d.getUint32(es)!==0x45786966)return null;var ts=es+6,le=d.getUint16(ts)===0x4949,i0=ts+d.getUint32(ts+4,le),n0=d.getUint16(i0);for(var i=0;i<n0;i++){var ta=i0+2+i*12;if(d.getUint16(ta)===0x8769){var ei=ts+d.getUint32(ta+8,le),ne=d.getUint16(ei);for(var j=0;j<ne;j++){var ea=ei+2+j*12;if(d.getUint16(ea)===0x9003){var va=ts+d.getUint32(ea+8,le),dt="";for(var k=0;k<19;k++){var ch=d.getUint8(va+k);if(ch===0)break;dt+=String.fromCharCode(ch)}var m=dt.match(/(d{4}):(d{2}):(d{2}) (d{2}):(d{2}):(d{2})/);return m?m[1]+"-"+m[2]+"-"+m[3]+"T"+m[4]+":"+m[5]+":"+m[6]:dt}}}return null}}o+=d.getUint16(o+2)+2}return null}
+  async function readFileWithExif(f){var b=await f.arrayBuffer(),cp=f.type==="image/jpeg"?readExifDate(b):null,e=new Uint8Array(b),s="";for(var i=0;i<e.length;i++)s+=String.fromCharCode(e[i]);return[btoa(s),cp]}
+
   function fmt(d: string) { return new Date(d).toLocaleDateString("zh-CN"); }
 
   // ── Init ──
@@ -287,12 +290,8 @@ import SEO from "../components/SEO.astro";
       status.textContent = "上传中..."; status.classList.remove("hidden");
       const uploads = await Promise.all(
         Array.from(files).map(async (f) => {
-          const base64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve((reader.result as string).split(",")[1]);
-            reader.readAsDataURL(f);
-          });
-          return { name: f.name, data: base64 };
+          const [base64, captured] = await readFileWithExif(f);
+          return { name: f.name, data: base64, captured_at: captured };
         })
       );
       try {
@@ -371,12 +370,8 @@ import SEO from "../components/SEO.astro";
       status.textContent = "上传中..."; status.classList.remove("hidden");
       const uploads = await Promise.all(
         Array.from(files).map(async (f) => {
-          const base64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve((reader.result as string).split(",")[1]);
-            reader.readAsDataURL(f);
-          });
-          return { name: f.name, data: base64 };
+          const [base64, captured] = await readFileWithExif(f);
+          return { name: f.name, data: base64, captured_at: captured };
         })
       );
       try {

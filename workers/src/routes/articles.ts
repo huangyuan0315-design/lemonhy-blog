@@ -8,6 +8,7 @@ import {
   deleteFile,
   parseFrontmatter,
   buildFrontmatter,
+  triggerDeploy,
 } from "../github";
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -66,6 +67,7 @@ app.post("/api/admin/articles", async (c) => {
     const path = `${POSTS_DIR}/${category}/${slug}.md`;
     const content = buildFrontmatter({ title, description, pubDate, category, tags }, body);
     await createOrUpdateFile(c.env.GITHUB_TOKEN, path, content);
+    triggerDeploy(c.env.DEPLOY_HOOK_ID);
     return c.json({ path, slug }, { status: 201 });
   } catch (e: any) {
     return c.json({ error: e.message }, { status: 500 });
@@ -93,6 +95,7 @@ app.put("/api/admin/articles/:category/:slug", async (c) => {
       await deleteFile(c.env.GITHUB_TOKEN, oldPath, oldFile.sha);
     }
     await createOrUpdateFile(c.env.GITHUB_TOKEN, path, content, path === oldPath ? oldFile.sha : undefined);
+    triggerDeploy(c.env.DEPLOY_HOOK_ID);
     return c.json({ path, slug: newSlug });
   } catch (e: any) {
     return c.json({ error: e.message }, { status: 500 });
@@ -107,6 +110,7 @@ app.delete("/api/admin/articles/:category/:slug", async (c) => {
     const file = await getFile(c.env.GITHUB_TOKEN, path);
     if (!file) return c.json({ error: "Not found" }, { status: 404 });
     await deleteFile(c.env.GITHUB_TOKEN, path, file.sha);
+    triggerDeploy(c.env.DEPLOY_HOOK_ID);
     return c.json({ ok: true });
   } catch (e: any) {
     return c.json({ error: e.message }, { status: 500 });
